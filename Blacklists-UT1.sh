@@ -46,7 +46,7 @@ Smtp_Command=
 # Constants
 #
 
-UT1_Version=1.2
+UT1_Version=1.2.1
 UT1_Uri=http://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz
 UT1_Config=Blacklists-UT1.conf
 
@@ -143,8 +143,6 @@ echo >> $squidGuard_Config
 for dir in $(find -P $squidGuard_dbhome -mindepth 1 -maxdepth 1 -type d | sort); do
 	dest=`basename $dir`
 	dest_block=false
-	if [ -f ${dir}/usage ] && [ "$UT1_Blacklist" = "" ]; then echo "="; fi
-	if [ -f ${dir}/usage ] && [ "$UT1_Blacklist" == "" ]; then echo "=="; fi
 	if [ -f ${dir}/usage ] && [ "$UT1_Blacklist" == "" ] && head -n 1 ${dir}/usage | grep "black" > /dev/null; then dest_block=true; fi
 	if [ -f ${dir}/usage ] && inArray "$dest" "${UT1_Blacklist[@]}"; then dest_block=true; fi
 	if [ $dest_block == "true" ]; then
