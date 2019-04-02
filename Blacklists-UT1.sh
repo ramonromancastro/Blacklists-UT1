@@ -23,9 +23,9 @@
 # Default configuration variables (You can modify them)
 #
 
-UT1_Blacklist=adult
+UT1_Blacklist=
 UT1_Whitelist=
-UT1_Squid_Integration=true
+UT1_Squid_Integration=false
 squid_user=squid
 squid_group=squid
 
@@ -46,7 +46,7 @@ Smtp_Command=
 # Constants
 #
 
-UT1_Version=1.2.1
+UT1_Version=1.2.2
 UT1_Uri=http://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz
 UT1_Config=Blacklists-UT1.conf
 
@@ -142,12 +142,13 @@ echo >> $squidGuard_Config
 
 for dir in $(find -P $squidGuard_dbhome -mindepth 1 -maxdepth 1 -type d | sort); do
 	dest=`basename $dir`
-	dest_block=false
-	if [ -f ${dir}/usage ] && [ "$UT1_Blacklist" == "" ] && head -n 1 ${dir}/usage | grep "black" > /dev/null; then dest_block=true; fi
-	if [ -f ${dir}/usage ] && inArray "$dest" "${UT1_Blacklist[@]}"; then dest_block=true; fi
-	if [ $dest_block == "true" ]; then
-		Blacklist="$Blacklist!${dest} "
-		msg "Processing [$dest] blacklist ..."
+	dest_block=skip
+	if [ -f ${dir}/usage ] && [ "${UT1_Blacklist[@]}" == "" ] && awk '/^\s*[^#]/{ print $0 }' ${dir}/usage |  grep "black" > /dev/null; then dest_block=black; fi
+	if [ -f ${dir}/usage ] && inArray "$dest" "${UT1_Blacklist[@]}"; then dest_block=black; fi
+	if inArray "$dest" "${UT1_Whitelist[@]}"; then dest_block=white; fi
+	if [ $dest_block != "skip" ]; then
+		if [ $dest_block == "black" ]; then Blacklist="$Blacklist!${dest} "; msg "Blacklist [$dest]"; fi
+		if [ $dest_block == "white" ]; then msg "Whitelist [$dest]"; fi
 		echo "dest ${dest} {" >> $squidGuard_Config
 		[ -s ${dir}/domains ]     && echo "	domainlist ${dest}/domains" >> $squidGuard_Config
 		[ -s ${dir}/urls ]        && echo "	urllist ${dest}/urls" >> $squidGuard_Config
@@ -155,7 +156,7 @@ for dir in $(find -P $squidGuard_dbhome -mindepth 1 -maxdepth 1 -type d | sort);
 		echo "	log ${dest}.log" >> $squidGuard_Config
 		echo "}" >> $squidGuard_Config
 	else
-		msg "Skip [$dest] blacklist"
+		msg "Skip [$dest] list"
 	fi
 done
 
@@ -165,7 +166,7 @@ msg "Creating $squidGuard_Config footer ..."
 echo >> $squidGuard_Config
 echo "acl {" >> $squidGuard_Config
 echo "	default {" >> $squidGuard_Config
-echo "		pass $UT1_Whitelist $Blacklist all" >> $squidGuard_Config
+echo "		pass ${UT1_Whitelist[@]} $Blacklist all" >> $squidGuard_Config
 echo "		redirect $squidGuard_redirect" >> $squidGuard_Config
 echo "	}" >> $squidGuard_Config
 echo "}" >> $squidGuard_Config
