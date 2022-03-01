@@ -46,7 +46,7 @@ Smtp_Command=
 # Constants
 #
 
-UT1_Version=1.2.2
+UT1_Version=1.2.3
 UT1_Uri=http://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz
 UT1_Config=Blacklists-UT1.conf
 
@@ -181,6 +181,7 @@ squidGuard -C all -c $squidGuard_Config -d || error "Error compiling squidGuard 
 msg "Regenerating permissions ..."
 chmod 640 $squidGuard_Config
 chown $squid_user:$squid_group $squidGuard_dbtop -R
+chown $squid_user:$squid_group $squidGuard_logdir -R
 
 msg "Regenerating SELinux ..."
 getenforce > /dev/null && restorecon -R $squidGuard_dbtop
